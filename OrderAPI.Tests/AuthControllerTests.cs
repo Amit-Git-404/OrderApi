@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Moq;
 using NUnit.Framework;
 using OrderApi.Controllers;
 using OrderApi.Model;
 using System;
+using System.Text;
 
 namespace OrderApi.Tests
 {
@@ -15,13 +17,17 @@ namespace OrderApi.Tests
         private AuthController _authController;
         private Mock<ILogger<AuthController>> _loggerMock;
         private Mock<IConfiguration> _configurationMock;
+        private IConfiguration _configuration;
 
         [SetUp]
         public void Setup()
         {
             _loggerMock = new Mock<ILogger<AuthController>>();
             _configurationMock = new Mock<IConfiguration>();
-            _authController = new AuthController(_loggerMock.Object, _configurationMock.Object);
+
+            _configuration = Configuration.InitConfiguration();
+
+            _authController = new AuthController(_loggerMock.Object, _configuration);
         }
 
         [Test]
@@ -44,7 +50,7 @@ namespace OrderApi.Tests
         public void Login_InvalidCredentials_ReturnsUnauthorized()
         {
             // Arrange
-            var user = new LoginModel { Username = "invalidUser", Password = "invalidPassword" };
+            var user = new LoginModel { Username = "username", Password = "password" };
 
             // Act
             var result = _authController.Login(user) as UnauthorizedResult;
@@ -72,6 +78,7 @@ namespace OrderApi.Tests
         {
             // Arrange
             _configurationMock.Setup(c => c.GetSection("JwtSettings")).Throws(new Exception("Simulated Exception"));
+
 
             // Act
             var result = _authController.Login(new LoginModel { Username = "amit", Password = "Pass@777" }) as ObjectResult;
